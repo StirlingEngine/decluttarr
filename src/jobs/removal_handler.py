@@ -23,6 +23,9 @@ class RemovalHandler:
                 await self._remove_download(affected_download, download_id, blocklist)
             elif handling_method == "obsolete_tag":
                 await self._tag_as_obsolete(affected_download, download_id)
+            elif handling_method == "obsolete_tag_and_remove":
+                await self._tag_as_obsolete(affected_download, download_id)
+                await self._remove_download(affected_download, download_id, blocklist)
 
             # Print out detailed removal messages (if any)
             if "removal_messages" in affected_download:
