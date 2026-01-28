@@ -306,7 +306,7 @@ class ArrInstance:
                     logger.info(tip)
         return
 
-    async def remove_queue_item(self, queue_id, *, blocklist=False):
+    async def remove_queue_item(self, queue_id, *, blocklist=False, from_client=True):
         """
         Remove a specific queue item from the queue by its queue id.
 
@@ -315,6 +315,7 @@ class ArrInstance:
         Args:
             queue_id (str): The queue ID of the queue item to be removed.
             blocklist (bool): Whether to add the item to the blocklist. Default is False.
+            from_client (bool): Whether to remove the data from client. Default is True.
 
         Returns:
             bool: Returns True if the removal was successful, False otherwise.
@@ -325,7 +326,7 @@ class ArrInstance:
         )
         endpoint = f"{self.api_url}/queue/{queue_id}"
         headers = {"X-Api-Key": self.api_key}
-        query = {"removeFromClient": True, "blocklist": blocklist}
+        query = {"removeFromClient": from_client, "blocklist": blocklist}
 
         # Send the request to remove the download from the queue
         response = await make_request(

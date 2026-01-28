@@ -25,7 +25,7 @@ class RemovalHandler:
                 await self._tag_as_obsolete(affected_download, download_id)
             elif handling_method == "obsolete_tag_and_remove":
                 await self._tag_as_obsolete(affected_download, download_id)
-                await self._remove_download(affected_download, download_id, blocklist)
+                await self._remove_download(affected_download, download_id, blocklist, False)
 
             # Print out detailed removal messages (if any)
             if "removal_messages" in affected_download:
@@ -34,13 +34,13 @@ class RemovalHandler:
 
             self.arr.tracker.deleted.append(download_id)
 
-    async def _remove_download(self, affected_download, download_id, blocklist):
+    async def _remove_download(self, affected_download, download_id, blocklist, with_data=True):
         queue_id = affected_download["queue_ids"][0]
         logger.info(
-            f"Job '{self.job_name}' triggered removal: {affected_download['title']}"
+            f"Job '{self.job_name}' triggered removal{' with data' if with_data else ''}: {affected_download['title']}"
         )
         logger.debug(f"remove_handler.py/_remove_download: download_id={download_id}")
-        await self.arr.remove_queue_item(queue_id=queue_id, blocklist=blocklist)
+        await self.arr.remove_queue_item(queue_id=queue_id, blocklist=blocklist, from_client=with_data)
 
     async def _tag_as_obsolete(self, affected_download, download_id):
         logger.info(
