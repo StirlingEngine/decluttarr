@@ -37,7 +37,7 @@ class RemovalHandler:
     async def _remove_download(self, affected_download, download_id, blocklist, with_data=True):
         queue_id = affected_download["queue_ids"][0]
         logger.info(
-            f"Job '{self.job_name}' triggered removal{' with data' if with_data else ''}: {affected_download['title']}"
+            f"Job '{self.job_name}' triggered removal{'' if with_data else ' without data'}: {affected_download['title']}"
         )
         logger.debug(f"remove_handler.py/_remove_download: download_id={download_id}")
         await self.arr.remove_queue_item(queue_id=queue_id, blocklist=blocklist, from_client=with_data)
