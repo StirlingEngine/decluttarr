@@ -14,6 +14,7 @@ class JobParams:
     max_concurrent_searches: int
     min_days_between_searches: int
     target_tags: list
+    general: dict
 
     def __init__(
         self,

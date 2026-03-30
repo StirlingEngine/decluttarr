@@ -1,3 +1,4 @@
+import copy
 from abc import ABC, abstractmethod
 
 from src.jobs.removal_handler import RemovalHandler
@@ -24,10 +25,20 @@ class RemovalJob(ABC):
         self.job = getattr(self.settings.jobs, self.job_name)
         self.queue_manager = QueueManager(self.arr, self.settings)
         self.max_strikes = getattr(self.job, "max_strikes", None)
+        self.effective_general = self._build_effective_general()
         if self.max_strikes:
             self.strikes_handler = StrikesHandler(
                 job_name=self.job_name, arr=self.arr, max_strikes=self.max_strikes
             )
+
+    def _build_effective_general(self):
+        job_general_overrides = getattr(self.job, "general", None) or {}
+        if not job_general_overrides:
+            return self.settings.general
+        effective = copy.copy(self.settings.general)
+        for key, value in job_general_overrides.items():
+            setattr(effective, key, value)
+        return effective
 
     async def run(self) -> int:
         if not self.job.enabled:
@@ -56,9 +67,11 @@ class RemovalJob(ABC):
             )
 
         # -- Removal --
+        effective_settings = copy.copy(self.settings)
+        effective_settings.general = self.effective_general
         await RemovalHandler(
             arr=self.arr,
-            settings=self.settings,
+            settings=effective_settings,
             job_name=self.job_name,
         ).remove_downloads(self.affected_downloads, self.blocklist)
 
