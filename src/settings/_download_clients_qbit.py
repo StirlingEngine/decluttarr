@@ -1,4 +1,5 @@
 from packaging import version
+from requests.cookies import RequestsCookieJar
 
 from src.settings._constants import ApiEndpoints, MinVersions
 from src.utils.common import extract_json_from_response, make_request, wait_and_exit
@@ -102,11 +103,27 @@ class QbitClient:
             if response.text == "Fails.":
                 _connection_error()
 
-            self.cookie = {"SID": response.cookies["SID"]}
+            self.cookie = self.extract_sid(response.cookies)
         except Exception as e:
             logger.error(f"Error refreshing qBit cookie: {e}")
             self.cookie = {}
             raise QbitError(e) from e
+
+    @staticmethod
+    def extract_sid(cookie_jar: RequestsCookieJar) -> dict[str, str]:
+        """
+        Extract the SID or dynamic QBT_SID_<WEB_UI_PORT>.
+
+        This supports the legacy 'SID' key and the dynamic port-based
+        naming introduced in qBit 5.2.x.
+        """
+        for cookie in cookie_jar:
+            # Simple, fast, and covers both legacy and new dynamic ports
+            if cookie.name == "SID" or cookie.name.startswith("QBT_SID_"):
+                return {cookie.name: cookie.value}
+
+        error = "No qBit cookie found"
+        raise QbitError(error)
 
     async def fetch_version(self):
         """Fetch the current qBittorrent version."""
@@ -170,7 +187,7 @@ class QbitClient:
 
     async def set_unwanted_folder(self):
         """Set the 'unwanted folder' setting in qBittorrent if needed."""
-        if self.settings.jobs.remove_bad_files:
+        if self.settings.jobs.remove_bad_files.enabled:
             logger.debug(
                 "_download_clients_qBit.py/set_unwanted_folder: Checking preferences and setting use_unwanted_folder if not already set",
             )
@@ -292,7 +309,9 @@ class QbitClient:
                     logger.debug(
                         "_download_clients_qBit/get_protected_and_private: Checking if torrents are private (only done for old qbit versions)",
                     )
-                    qbit_item_props = await self.get_torrent_properties(qbit_item["hash"])
+                    qbit_item_props = await self.get_torrent_properties(
+                        qbit_item["hash"]
+                    )
 
                     if not qbit_item_props:
                         logger.error(
